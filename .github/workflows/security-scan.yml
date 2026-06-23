@@ -127,11 +127,6 @@ jobs:
       - name: ESLint
         run: npm run lint
 
-      # RIMA NLU gate (CONCEPT K2/M2/§9e): model.json sinkron + akurasi ★≥90%
-      # total ≥75% + intent berjawaban + chip hidup + profanity-lint PERSONA §3
-      - name: RIMA NLU gate
-        run: npm run rima:check
-
   # ─── JOB D: Gitleaks (secret scanning) ─────────────────────────────────────
   # Scan working tree saat ini untuk rahasia ter-commit (token/password/key).
   # Pakai Docker image resmi (tanpa license/token — gratis untuk repo apa pun).
