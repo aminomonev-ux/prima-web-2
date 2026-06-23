@@ -1,6 +1,8 @@
 # PRIMA — Sistem Perencanaan & Kinerja RSJD Dr. Amino Gondohutomo
 
-Aplikasi web internal RSJD Dr. Amino Gondohutomo Semarang untuk manajemen **Usulan Kebutuhan Aset** dan **E-Anggaran (eControlling)**. Dibangun dengan Next.js 14 App Router dan MySQL 8.
+Aplikasi web internal RSJD Dr. Amino Gondohutomo Semarang untuk manajemen perencanaan, penganggaran, dan kinerja: **Usulan Kebutuhan Aset**, **E-Anggaran (eControlling)**, **BLUD**, **Perjanjian Kinerja**, **LKjIP**, **Buku Besar Aset**, dan **Rencana Aksi**. Dibangun dengan Next.js 16 (App Router) dan MySQL 8.
+
+> ⚠️ Repositori ini berisi kode aplikasi saja. Konfigurasi rahasia (kredensial DB, JWT secret, token API) **tidak** disertakan — lihat `.env.example` untuk daftar variabel yang harus diisi sendiri.
 
 ---
 
@@ -11,22 +13,25 @@ Aplikasi web internal RSJD Dr. Amino Gondohutomo Semarang untuk manajemen **Usul
 | Framework | Next.js 16 (App Router) · React 19 · TypeScript |
 | Database | MySQL 8 via `mysql2` (raw SQL, tagged template) |
 | Auth | JWT (`jose`) · bcryptjs · HTTP-only cookie |
-| Security | Upstash Redis (rate limiting) · Cloudflare Turnstile · Audit Log |
-| Storage | Google Drive API (upload file pendukung usulan) |
+| Keamanan | Redis/Upstash (rate limiting) · Cloudflare Turnstile · Audit Log · CSP nonce |
+| Storage | Google Drive API (arsip dokumen & file pendukung) |
 | Email | Nodemailer / Gmail SMTP |
-| UI | Tailwind CSS · shadcn/ui (Nova) · Lucide Icons |
-| Hosting | Vercel · GitHub |
+| UI | Tailwind CSS · shadcn/ui · Lucide Icons |
+| Deployment | Server (Linux/Windows) + PM2 + Nginx + MySQL EVENT (cron) |
 
 ---
 
 ## Fitur Utama
 
 - **Usulan Kebutuhan** — pengajuan, review bidang, telaah admin, putusan Kasubag/Kabag, export
-- **E-Anggaran (eControlling)** — input SSK, rekening, realisasi, pendapatan, laporan
-- **Manajemen User** — RBAC 26+ role, aktivasi, reset password, app access control
-- **Audit Trail** — semua aksi kritis tercatat di tabel `audit_log`
-- **Notifikasi** — real-time per user/role untuk perubahan status usulan
-- **Admin Panel** — monitoring sesi, attack monitor, broadcast, konfigurasi sistem
+- **E-Anggaran (eControlling)** — input SSK, rekening, realisasi, pendapatan, laporan, versi MURNI/PERUBAHAN
+- **BLUD** — DPA, pergeseran, kode besar, master akun, penanggung jawab, cetak rekap
+- **Perjanjian Kinerja (PK)** — penyusun dokumen + generator Word
+- **LKjIP** — penyusun Laporan Kinerja tahunan berbasis outline-tree + generator Word
+- **Buku Besar Aset** — register belanja modal lintas-tahun + lifecycle realisasi
+- **Rencana Aksi** — turunan target kinerja
+- **Manajemen User** — RBAC bertingkat, aktivasi, reset password, app access control, role promotion
+- **Audit Trail & Notifikasi** — semua aksi kritis tercatat; notifikasi real-time per user/role
 
 ---
 
@@ -34,18 +39,22 @@ Aplikasi web internal RSJD Dr. Amino Gondohutomo Semarang untuk manajemen **Usul
 
 ```
 app/
-├── (auth)/          # Login, register, forgot password, verify email
-├── (dashboard)/     # Halaman utama (usulan, kinerja, admin, menu)
-└── api/             # API routes (auth, usulan, kinerja, admin, config)
+├── (auth)/          # Login, reset password, verify email
+├── (dashboard)/     # Modul: usulan, kinerja, blud, perjanjian-kinerja, lkjip, dll
+└── api/             # API routes per modul
 
 lib/
-├── data/            # db.ts (MySQL pool), usulan.ts, kinerja.ts
-├── security/        # auth.ts, auditlog.ts, ratelimit.ts, recaptcha.ts
-└── services/        # email.ts, notifications.ts
+├── data/            # db.ts (MySQL pool), data layer per modul
+├── security/        # auth.ts, auditlog.ts, ratelimit.ts
+└── services/        # email.ts, notifications.ts, drive.ts
 
-docs/                # Schema MySQL, migration scripts, panduan
+docs/
+├── schema-mysql.sql # Skema database
+├── migrations/      # Skrip migrasi (MySQL)
+└── design/          # Design system
+
 proxy.ts             # Edge Runtime — route guard & CSP (BUKAN middleware.ts)
-types/index.ts       # Semua TypeScript types
+types/index.ts       # Definisi TypeScript types
 lib/constants.ts     # Roles, status, mapping bidang
 ```
 
@@ -56,48 +65,28 @@ lib/constants.ts     # Roles, status, mapping bidang
 ### 1. Clone & install dependencies
 
 ```bash
-git clone https://github.com/your-org/prima-web.git
-cd prima-web
+git clone https://github.com/aminomonev-ux/prima-web-2.git
+cd prima-web-2
 npm install
 ```
 
 ### 2. Konfigurasi environment
 
-Buat file `.env.local` di root:
+Salin `.env.example` menjadi `.env.local`, lalu isi nilai sebenarnya:
 
-```env
-# Database
-DATABASE_URL=mysql://user:password@host:3306/prima_db
-
-# Auth
-JWT_SECRET=your-random-secret-min-32-chars
-
-# Redis (rate limiting)
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
-
-# Cloudflare Turnstile
-NEXT_PUBLIC_TURNSTILE_SITE_KEY=
-TURNSTILE_SECRET_KEY=
-
-# Google Drive (upload file)
-GOOGLE_OAUTH_CLIENT_ID=
-GOOGLE_OAUTH_CLIENT_SECRET=
-GOOGLE_OAUTH_REFRESH_TOKEN=
-GOOGLE_DRIVE_FOLDER_ID=
-
-# Email (Nodemailer)
-GMAIL_USER=
-GMAIL_APP_PASSWORD=
+```bash
+cp .env.example .env.local
 ```
 
-### 3. Setup database
+Variabel wajib: `MYSQL_*`, `JWT_SECRET` (min 32 char), `CRON_SECRET`. Selengkapnya ada di `.env.example` beserta cara generate masing-masing.
 
-Jalankan schema MySQL:
+### 3. Setup database
 
 ```bash
 mysql -u root -p prima_db < docs/schema-mysql.sql
 ```
+
+Lalu jalankan migrasi di `docs/migrations/` sesuai urutan jika diperlukan.
 
 ### 4. Jalankan development server
 
@@ -114,8 +103,8 @@ Buka [http://localhost:3000](http://localhost:3000).
 ```
 SUPER_ADMIN
 ADMIN · ADMIN_KASUBAG · ADMIN_KABAG
-BIDANG_UMUM · BIDANG_RENBANG · BIDANG_PENUNJANG · BIDANG_PELAYANAN
-SUB_UMUM_* · SUB_KEU_* · SUB_RENBANG_* · SUB_PENUNJANG_* · SUB_PELAYANAN_*
+BIDANG_* (4 bidang)
+SUB_BIDANG (18 role)
 ```
 
 Detail mapping role → bidang ada di `lib/constants.ts`.
@@ -125,17 +114,18 @@ Detail mapping role → bidang ada di `lib/constants.ts`.
 ## Keamanan
 
 - Session JWT di HTTP-only cookie (`prima_session`)
-- Rate limiting via Upstash Redis (login max 5x, lock 15 menit)
+- Rate limiting (login max 5x → lock 15 menit; session timeout 60 menit)
 - CSP nonce per-request dikelola di `proxy.ts`
 - HTTP security headers di `next.config.ts` (HSTS, X-Frame-Options, nosniff, dll)
+- `JWT_SECRET` wajib diisi — aplikasi gagal start jika kosong
 - Semua aksi kritis dicatat di tabel `audit_log`
-- **Jangan rename `proxy.ts` ke `middleware.ts`** — akan konflik fatal di Next.js
+- CI keamanan otomatis: SAST (Semgrep), npm-audit, secret-scan (Gitleaks), tsc + ESLint
+- **Jangan rename `proxy.ts` ke `middleware.ts`** — konflik fatal di Next.js
+
+Menemukan kerentanan? Lihat [`SECURITY.md`](SECURITY.md).
 
 ---
 
-## Referensi
+## Lisensi
 
-- Schema database: `docs/schema-mysql.sql`
-- Panduan akses LAN: `docs/akses-lokal-lan.txt`
-- Alur usulan: `docs/workflow/flowchart-usulan.html`
-- Security audit: `docs/security-audit.html`
+Lihat [`LICENSE`](LICENSE).
