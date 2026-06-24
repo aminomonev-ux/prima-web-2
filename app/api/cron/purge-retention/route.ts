@@ -3,9 +3,10 @@
 // Auth: header `Authorization: Bearer <CRON_SECRET>` (env var).
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withTransaction } from '@/lib/data/db';
+import { withTransaction, sqlInt } from '@/lib/data/db';
 import { writeAuditLog } from '@/lib/security/auditlog';
 import { verifyCronSecret } from '@/lib/security/cron-auth';
+import { SESSION_DURATION_HOURS } from '@/lib/constants';
 
 export async function POST(req: NextRequest) {
   // V4K-1: cron secret guard constant-time.
@@ -15,6 +16,7 @@ export async function POST(req: NextRequest) {
   const startedAt = Date.now();
   const result = {
     audit_log_deleted: 0,
+    user_sessions_ghost_invalidated: 0,
     user_sessions_deleted: 0,
     notifications_read_deleted: 0,
     notifications_unread_deleted: 0,
@@ -25,6 +27,17 @@ export async function POST(req: NextRequest) {
     await withTransaction(async ({ tx }) => {
       // L53: sql/tx wrapper return non-SELECT result sebagai array [{affectedRows}],
       // bukan object. Cast hati-hati. Lihat docs/audit/AUDIT_LESSONS_LEARNED.md L53.
+
+      // N-2: ghost-session invalidate dipindah ke sini dari GET /api/admin/sessions
+      // (sebelumnya write-on-read tiap request). Row aktif yg JWT-nya sudah lewat
+      // SESSION_DURATION_HOURS ditandai invalidated; deletion final oleh r2 (90 hari).
+      const r0 = await tx`
+        UPDATE user_sessions SET invalidated_at = NOW()
+        WHERE invalidated_at IS NULL
+          AND last_active < NOW() - INTERVAL ${sqlInt(SESSION_DURATION_HOURS)} HOUR
+      ` as unknown as Array<{ affectedRows: number }>;
+      result.user_sessions_ghost_invalidated = r0[0]?.affectedRows ?? 0;
+
       const r1 = await tx`DELETE FROM audit_log WHERE created_at < NOW() - INTERVAL 12 MONTH` as unknown as Array<{ affectedRows: number }>;
       result.audit_log_deleted = r1[0]?.affectedRows ?? 0;
 

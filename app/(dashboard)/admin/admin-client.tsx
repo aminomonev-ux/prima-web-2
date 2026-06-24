@@ -117,33 +117,34 @@ export default function AdminClient({ userId, username, role, sessionId, themePr
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Share+Tech+Mono&display=swap');
+        /* N-1: @import Google Fonts dibuang — diblok CSP (style-src/font-src tanpa
+           fonts.googleapis/gstatic) & langgar DESIGN-SYSTEM. Pakai font app yg sudah 'self'. */
         *{box-sizing:border-box;margin:0;padding:0;}
         @keyframes scan{0%{transform:translateY(0)}100%{transform:translateY(100vh)}}
         @keyframes pls{0%,100%{box-shadow:0 0 10px rgba(0,212,255,.5),0 0 3px rgba(0,212,255,.3)}50%{box-shadow:0 0 22px rgba(0,212,255,.9),0 0 8px rgba(0,212,255,.6)}}
         @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-        .ap-body{min-height:100vh;background:#020b14;background-image:linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px);background-size:40px 40px;color:#e0f7ff;font-family:'Exo 2',sans-serif;position:relative;overflow-x:hidden;}
+        .ap-body{min-height:100vh;background:#020b14;background-image:linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px);background-size:40px 40px;color:#e0f7ff;font-family:var(--font-jakarta),sans-serif;position:relative;overflow-x:hidden;}
         .ap-body::before{content:'';position:fixed;top:-100vh;left:0;right:0;height:200vh;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:0;animation:scan 12s linear infinite;}
         .ap-header{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,rgba(0,212,255,.07),rgba(0,255,200,.04)),rgba(2,11,20,0.96);backdrop-filter:blur(14px);border-bottom:1px solid rgba(0,212,255,0.2);padding:0 24px;height:76px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 0 40px rgba(0,212,255,.08);}
         .ap-brand{display:flex;align-items:center;gap:14px;border:1px solid rgba(0,212,255,.55);border-radius:12px;padding:12px 20px 12px 12px;background:rgba(0,212,255,.06);box-shadow:0 0 20px rgba(0,212,255,.12),inset 0 0 20px rgba(0,212,255,.03);}
         .ap-brand-icon{width:42px;height:42px;border-radius:10px;border:1px solid rgba(0,212,255,.6);display:flex;align-items:center;justify-content:center;color:#00d4ff;background:rgba(0,212,255,.08);animation:pls 2.5s ease-in-out infinite;flex-shrink:0;}
-        .ap-brand-title{font-size:17px;font-weight:800;color:#e0f7ff;letter-spacing:2.5px;font-family:'Exo 2',sans-serif;text-shadow:0 0 20px rgba(0,212,255,.5);}
-        .ap-brand-sub{font-size:9px;color:#5a8ea8;letter-spacing:1px;margin-top:4px;font-family:'Share Tech Mono',monospace;}
-        .ap-clock{font-size:22px;font-weight:400;color:#00d4ff;letter-spacing:3px;font-family:'Share Tech Mono',monospace;text-shadow:0 0 12px rgba(0,212,255,.4);}
+        .ap-brand-title{font-size:17px;font-weight:800;color:#e0f7ff;letter-spacing:2.5px;font-family:var(--font-jakarta),sans-serif;text-shadow:0 0 20px rgba(0,212,255,.5);}
+        .ap-brand-sub{font-size:9px;color:#5a8ea8;letter-spacing:1px;margin-top:4px;font-family:'JetBrains Mono',monospace;}
+        .ap-clock{font-size:22px;font-weight:400;color:#00d4ff;letter-spacing:3px;font-family:'JetBrains Mono',monospace;text-shadow:0 0 12px rgba(0,212,255,.4);}
         .ap-user{display:flex;align-items:center;gap:10px;cursor:pointer;padding:5px 14px 5px 5px;border-radius:10px;border:1px solid rgba(0,212,255,.3);background:rgba(0,212,255,.05);transition:all .2s;user-select:none;}
         .ap-user:hover{border-color:rgba(0,212,255,.65);background:rgba(0,212,255,.1);box-shadow:0 0 14px rgba(0,212,255,.15);}
-        .ap-avatar{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#00d4ff,#00ffc8);color:#020b14;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(0,212,255,.4);font-family:'Exo 2',sans-serif;}
+        .ap-avatar{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#00d4ff,#00ffc8);color:#020b14;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(0,212,255,.4);font-family:var(--font-jakarta),sans-serif;}
         .ap-uname{font-size:12px;font-weight:700;color:#e0f7ff;letter-spacing:.8px;}
         .ap-urole{font-size:9px;font-weight:700;background:linear-gradient(90deg,#00d4ff,#00ffc8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:.8px;}
         .ap-chevron{transition:transform .2s;color:#00d4ff;flex-shrink:0;}
         .ap-chevron.open{transform:rotate(180deg);}
         .ap-dropdown{position:absolute;top:calc(100%+10px);right:0;width:210px;background:#0a0e14;border:1px solid rgba(0,212,255,.2);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.6);overflow:hidden;z-index:300;}
-        .ap-ddi{display:flex;align-items:center;gap:9px;padding:11px 16px;font-size:12px;color:#a0cfe0;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:'Exo 2',sans-serif;transition:background .15s;letter-spacing:.3px;}
+        .ap-ddi{display:flex;align-items:center;gap:9px;padding:11px 16px;font-size:12px;color:#a0cfe0;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:var(--font-jakarta),sans-serif;transition:background .15s;letter-spacing:.3px;}
         .ap-ddi:hover{background:rgba(0,212,255,.08);color:#00d4ff;}
         .ap-ddi.danger{color:#ff4466;}
         .ap-ddi.danger:hover{background:rgba(255,68,102,.08);}
         .ap-tabs{display:flex;align-items:center;gap:0;padding:0 20px;background:rgba(2,11,20,.92);border-bottom:1px solid rgba(0,212,255,.1);overflow-x:auto;position:relative;z-index:10;}
-        .ap-tab{display:flex;align-items:center;gap:6px;padding:13px 15px;font-size:10.5px;font-weight:700;letter-spacing:1.2px;color:#5a8ea8;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;font-family:'Exo 2',sans-serif;}
+        .ap-tab{display:flex;align-items:center;gap:6px;padding:13px 15px;font-size:10.5px;font-weight:700;letter-spacing:1.2px;color:#5a8ea8;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;font-family:var(--font-jakarta),sans-serif;}
         .ap-tab:hover{color:#a0cfe0;}
         .ap-tab.active{color:#00d4ff;border-bottom-color:#00d4ff;text-shadow:0 0 8px rgba(0,212,255,.4);}
         .ap-content{padding:24px;max-width:1400px;margin:0 auto;position:relative;z-index:1;}
@@ -155,8 +156,8 @@ export default function AdminClient({ userId, username, role, sessionId, themePr
         .ap-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
         .ap-kpi{background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.1);border-radius:8px;padding:16px 18px;position:relative;overflow:hidden;}
         .ap-kpi::after{content:'';position:absolute;top:-20px;right:-20px;width:70px;height:70px;background:radial-gradient(circle,rgba(0,212,255,.08),transparent 70%);pointer-events:none;}
-        .ap-kpi-label{font-size:9px;letter-spacing:1.8px;color:#5a8ea8;margin-bottom:8px;text-transform:uppercase;font-family:'Exo 2',sans-serif;}
-        .ap-kpi-value{font-size:30px;font-weight:400;font-family:'Share Tech Mono',monospace;}
+        .ap-kpi-label{font-size:9px;letter-spacing:1.8px;color:#5a8ea8;margin-bottom:8px;text-transform:uppercase;font-family:var(--font-jakarta),sans-serif;}
+        .ap-kpi-value{font-size:30px;font-weight:400;font-family:'JetBrains Mono',monospace;}
         .ap-kpi-sub{font-size:10px;color:#5a8ea8;margin-top:4px;}
         .cyan{color:#00d4ff;}
         .green{color:#00ffc8;}
@@ -165,11 +166,11 @@ export default function AdminClient({ userId, username, role, sessionId, themePr
         .ap-table-wrap{background:rgba(7,21,37,.92);border:1px solid rgba(0,212,255,.12);border-radius:10px;overflow:hidden;}
         .ap-table{width:100%;border-collapse:collapse;font-size:12px;}
         .ap-table thead tr{background:linear-gradient(90deg,rgba(0,212,255,.08),rgba(0,255,200,.04));}
-        .ap-table th{padding:11px 14px;text-align:left;font-size:9.5px;font-weight:700;letter-spacing:1.5px;color:#5a8ea8;border-bottom:1px solid rgba(0,212,255,.12);font-family:'Exo 2',sans-serif;}
-        .ap-table td{padding:9px 14px;border-bottom:1px solid rgba(0,212,255,.05);color:#a0cfe0;vertical-align:middle;font-family:'Exo 2',sans-serif;}
-        .ap-table td.mono{font-family:'Share Tech Mono',monospace;}
+        .ap-table th{padding:11px 14px;text-align:left;font-size:9.5px;font-weight:700;letter-spacing:1.5px;color:#5a8ea8;border-bottom:1px solid rgba(0,212,255,.12);font-family:var(--font-jakarta),sans-serif;}
+        .ap-table td{padding:9px 14px;border-bottom:1px solid rgba(0,212,255,.05);color:#a0cfe0;vertical-align:middle;font-family:var(--font-jakarta),sans-serif;}
+        .ap-table td.mono{font-family:'JetBrains Mono',monospace;}
         .ap-table tr:hover td{background:rgba(0,212,255,.04);}
-        .ap-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;border:1px solid;transition:all .2s;font-family:'Exo 2',sans-serif;}
+        .ap-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;border:1px solid;transition:all .2s;font-family:var(--font-jakarta),sans-serif;}
         .ap-btn-cyan{border-color:rgba(0,212,255,.4);color:#00d4ff;background:rgba(0,212,255,.08);}
         .ap-btn-cyan:hover{background:rgba(0,212,255,.15);border-color:#00d4ff;box-shadow:0 0 10px rgba(0,212,255,.2);}
         .ap-btn-red{border-color:rgba(255,68,102,.4);color:#ff4466;background:rgba(255,68,102,.08);}
@@ -177,7 +178,7 @@ export default function AdminClient({ userId, username, role, sessionId, themePr
         .ap-btn-green{border-color:rgba(0,255,200,.4);color:#00ffc8;background:rgba(0,255,200,.08);}
         .ap-btn-green:hover{background:rgba(0,255,200,.15);border-color:#00ffc8;box-shadow:0 0 10px rgba(0,255,200,.2);}
         .ap-btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;}
-        .ap-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.5px;font-family:'Exo 2',sans-serif;}
+        .ap-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.5px;font-family:var(--font-jakarta),sans-serif;}
         .badge-green{background:rgba(0,255,200,.1);color:#00ffc8;border:1px solid rgba(0,255,200,.28);}
         .badge-yellow{background:rgba(255,204,0,.1);color:#ffcc00;border:1px solid rgba(255,204,0,.28);}
         .badge-red{background:rgba(255,68,102,.1);color:#ff4466;border:1px solid rgba(255,68,102,.28);}
@@ -185,13 +186,13 @@ export default function AdminClient({ userId, username, role, sessionId, themePr
         .badge-gray{background:rgba(90,142,168,.1);color:#5a8ea8;border:1px solid rgba(90,142,168,.28);}
         .dot-active{display:inline-block;width:6px;height:6px;border-radius:50%;background:#00ffc8;animation:blink 1.8s ease-in-out infinite;}
         .dot-idle{display:inline-block;width:6px;height:6px;border-radius:50%;background:#ffcc00;}
-        .ap-input{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.2);border-radius:6px;padding:8px 12px;color:#e0f7ff;font-size:12px;font-family:'Share Tech Mono',monospace;outline:none;width:100%;}
+        .ap-input{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.2);border-radius:6px;padding:8px 12px;color:#e0f7ff;font-size:12px;font-family:'JetBrains Mono',monospace;outline:none;width:100%;}
         .ap-input:focus{border-color:rgba(0,212,255,.55);background:rgba(0,212,255,.08);}
-        .ap-select{background:#071525;border:1px solid rgba(0,212,255,.2);border-radius:6px;padding:8px 12px;color:#a0cfe0;font-size:12px;font-family:'Exo 2',sans-serif;outline:none;}
+        .ap-select{background:#071525;border:1px solid rgba(0,212,255,.2);border-radius:6px;padding:8px 12px;color:#a0cfe0;font-size:12px;font-family:var(--font-jakarta),sans-serif;outline:none;}
         .ap-select:focus{border-color:rgba(0,212,255,.55);}
         .ap-select option{background:#071525;color:#e0f7ff;}
         .ap-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-        .ap-section-title{font-size:12px;font-weight:800;letter-spacing:1.5px;color:#00d4ff;margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid rgba(0,212,255,.12);text-transform:uppercase;font-family:'Exo 2',sans-serif;}
+        .ap-section-title{font-size:12px;font-weight:800;letter-spacing:1.5px;color:#00d4ff;margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid rgba(0,212,255,.12);text-transform:uppercase;font-family:var(--font-jakarta),sans-serif;}
         .ap-toggle{position:relative;width:44px;height:22px;cursor:pointer;}
         .ap-toggle input{opacity:0;width:0;height:0;position:absolute;}
         .ap-toggle-track{position:absolute;inset:0;border-radius:11px;background:rgba(255,68,102,.25);border:1px solid rgba(255,68,102,.4);transition:all .3s;}
@@ -203,7 +204,7 @@ export default function AdminClient({ userId, username, role, sessionId, themePr
         .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);}
         .modal-box{background:#0a1220;border:1px solid rgba(0,212,255,.3);border-radius:12px;padding:28px;width:100%;max-width:420px;box-shadow:0 28px 60px rgba(0,0,0,.7);}
         .modal-box.danger{border-color:rgba(255,68,102,.4);box-shadow:0 28px 60px rgba(0,0,0,.7),0 0 30px rgba(255,68,102,.08);}
-        .modal-title{font-size:13px;font-weight:800;color:#00d4ff;letter-spacing:1.5px;margin-bottom:16px;display:flex;align-items:center;gap:8px;font-family:'Exo 2',sans-serif;}
+        .modal-title{font-size:13px;font-weight:800;color:#00d4ff;letter-spacing:1.5px;margin-bottom:16px;display:flex;align-items:center;gap:8px;font-family:var(--font-jakarta),sans-serif;}
         .msg-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(0,255,200,.07);border:1px solid rgba(0,255,200,.2);border-radius:6px;font-size:12px;color:#00ffc8;margin-bottom:12px;}
         .msg-err{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,68,102,.07);border:1px solid rgba(255,68,102,.2);border-radius:6px;font-size:12px;color:#ff4466;margin-bottom:12px;}
         @media(max-width:1100px){.ap-grid5{grid-template-columns:repeat(3,1fr)!important;}.sec-grid{grid-template-columns:1fr!important;}.sec-span2{grid-column:span 1!important;}.email-grid{grid-template-columns:1fr!important;}}
@@ -409,7 +410,7 @@ function TabSessions({ selfSessionId, isSA }: { selfSessionId:string; isSA:boole
             {c.rows.map(([k,v,cl])=>(
               <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(0,212,255,0.06)',fontSize:12}}>
                 <span style={{color:'#5a8ea8'}}>{k}</span>
-                <span className={cl as string} style={{fontWeight:700,fontFamily:"'Share Tech Mono',monospace"}}>{v as string}</span>
+                <span className={cl as string} style={{fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>{v as string}</span>
               </div>
             ))}
           </div>
@@ -419,7 +420,7 @@ function TabSessions({ selfSessionId, isSA }: { selfSessionId:string; isSA:boole
           {[['Session Inactive',`60 menit`,'cyan'],['Keepalive Interval','25 menit','cyan'],['Password Min','8 char + A-Z+0-9','green']].map(([k,v,cl])=>(
             <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(0,212,255,0.06)',fontSize:12}}>
               <span style={{color:'#5a8ea8'}}>{k}</span>
-              <span className={cl as string} style={{fontWeight:700,fontFamily:"'Share Tech Mono',monospace"}}>{v as string}</span>
+              <span className={cl as string} style={{fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>{v as string}</span>
             </div>
           ))}
         </div>
@@ -428,7 +429,7 @@ function TabSessions({ selfSessionId, isSA }: { selfSessionId:string; isSA:boole
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
             {[['TOTAL',s?.total??0,'cyan'],['AKTIF',s?.aktif??0,'green'],['IDLE',s?.idle??0,'yellow'],['UNIK',s?.unik??0,'cyan']].map(([l,v,c])=>(
               <div key={l as string} style={{textAlign:'center',padding:8,background:'rgba(0,212,255,0.04)',borderRadius:6,border:'1px solid rgba(0,212,255,0.1)'}}>
-                <div style={{fontSize:20,fontWeight:700,fontFamily:"'Share Tech Mono',monospace"}} className={c as string}>{v as number}</div>
+                <div style={{fontSize:20,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}} className={c as string}>{v as number}</div>
                 <div style={{fontSize:9,color:'#5a8ea8',letterSpacing:1}}>{l as string}</div>
               </div>
             ))}
@@ -466,10 +467,10 @@ function TabSessions({ selfSessionId, isSA }: { selfSessionId:string; isSA:boole
                   <tr key={r.session_id}>
                     <td style={{fontWeight:700,color:isSelf?'#00ffc8':'#e0f7ff'}}>{r.username}{isSelf&&<span style={{fontSize:9,marginLeft:4,color:'#5a8ea8'}}>(ANDA)</span>}</td>
                     <td><span className="ap-badge badge-cyan">{r.role}</span></td>
-                    <td style={{fontFamily:"'Share Tech Mono',monospace",fontSize:11}}>{r.ip_address??'-'}</td>
+                    <td style={{fontFamily:"'JetBrains Mono',monospace",fontSize:11}}>{r.ip_address??'-'}</td>
                     <td style={{fontSize:11,color:'#5a8ea8'}}>{fmtTs(r.created_at)}</td>
                     <td style={{fontSize:11,color:'#5a8ea8'}}>{fmtTs(r.last_active)}</td>
-                    <td className={isIdle?'yellow':'green'} style={{fontFamily:"'Share Tech Mono',monospace",fontWeight:700}}>{fmtIdle(idleSec)}</td>
+                    <td className={isIdle?'yellow':'green'} style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:700}}>{fmtIdle(idleSec)}</td>
                     <td><span className={`ap-badge ${isIdle?'badge-yellow':'badge-green'}`}><span className={isIdle?'dot-idle':'dot-active'}/>{isIdle?'IDLE':'AKTIF'}</span></td>
                     <td>
                       {!isSelf ? (
@@ -683,7 +684,7 @@ function TabAttackMonitor() {
               border:`1px solid ${filter===f.id?f.dot:'rgba(90,142,168,.3)'}`,
               background:filter===f.id?`rgba(${f.dot==='#00ffc8'?'0,255,200':f.dot==='#ff4466'?'255,68,102':f.dot==='#ffcc00'?'255,204,0':f.dot==='#00d4ff'?'0,212,255':'90,142,168'},.1)`:'transparent',
               color:filter===f.id?f.dot:'#5a8ea8',cursor:'pointer',fontSize:10,fontWeight:700,
-              letterSpacing:.8,fontFamily:"'Exo 2',sans-serif",transition:'all .15s'}}>
+              letterSpacing:.8,fontFamily:"var(--font-jakarta),sans-serif",transition:'all .15s'}}>
             <span style={{width:7,height:7,borderRadius:'50%',background:f.dot,display:'inline-block',flexShrink:0}}/>
             {f.label}
           </button>
@@ -709,7 +710,7 @@ function TabAttackMonitor() {
                 <td style={{fontWeight:700,color:'#e0f7ff'}}>{row.username??'-'}</td>
                 <td>
                   <span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:10,fontWeight:700,
-                    color:amDot(row.event_type),fontFamily:"'Exo 2',sans-serif"}}>
+                    color:amDot(row.event_type),fontFamily:"var(--font-jakarta),sans-serif"}}>
                     <span style={{width:6,height:6,borderRadius:'50%',background:amDot(row.event_type),
                       display:'inline-block',flexShrink:0,
                       boxShadow:row.event_type==='LOGIN_SUCCESS'?`0 0 6px ${amDot(row.event_type)}`:'none'}}/>
@@ -1139,7 +1140,7 @@ function TabSecurityStatus() {
           </div>
           <div>
             <div style={{fontSize:11,color:'#5a8ea8',letterSpacing:2,marginBottom:2}}>SECURITY LEVEL</div>
-            <div style={{fontSize:22,fontWeight:800,color:secColor,letterSpacing:3,fontFamily:"'Exo 2',sans-serif"}}>{secLevel}</div>
+            <div style={{fontSize:22,fontWeight:800,color:secColor,letterSpacing:3,fontFamily:"var(--font-jakarta),sans-serif"}}>{secLevel}</div>
           </div>
         </div>
         <div style={{display:'flex',gap:24,flexWrap:'wrap'}}>
@@ -1150,7 +1151,7 @@ function TabSecurityStatus() {
           ].map(([l,v,c])=>(
             <div key={l as string} style={{textAlign:'center'}}>
               <div style={{fontSize:9,color:'#5a8ea8',letterSpacing:1.5,marginBottom:3}}>{l as string}</div>
-              <div style={{fontSize:20,fontWeight:400,color:c as string,fontFamily:"'Share Tech Mono',monospace"}}>{v as string}</div>
+              <div style={{fontSize:20,fontWeight:400,color:c as string,fontFamily:"'JetBrains Mono',monospace"}}>{v as string}</div>
             </div>
           ))}
         </div>
@@ -1173,7 +1174,7 @@ function TabSecurityStatus() {
                   </span>
                   <span style={{fontSize:11,color:'#a0cfe0'}}>{label}</span>
                 </div>
-                <span style={{fontSize:10,color:'#5a8ea8',fontFamily:"'Share Tech Mono',monospace"}}>{val}</span>
+                <span style={{fontSize:10,color:'#5a8ea8',fontFamily:"'JetBrains Mono',monospace"}}>{val}</span>
               </div>
             ))}
           </div>
@@ -1200,7 +1201,7 @@ function TabSecurityStatus() {
             ].map(([k,v,c])=>(
               <div key={k as string} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(0,212,255,.05)',fontSize:11}}>
                 <span style={{color:'#5a8ea8'}}>{k as string}</span>
-                <span className={c as string} style={{fontFamily:"'Share Tech Mono',monospace",fontWeight:700}}>{v as string}</span>
+                <span className={c as string} style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:700}}>{v as string}</span>
               </div>
             ))}
           </div>
@@ -1340,7 +1341,7 @@ function TabAuditTrail() {
                 <td style={{fontSize:11,color:'#5a8ea8',whiteSpace:'nowrap'}}>{fmtTs(r.created_at)}</td>
                 <td>{eventBadge(r.event_type)}</td>
                 <td style={{fontWeight:700,color:'#e0f7ff'}}>{r.username??'-'}</td>
-                <td style={{fontSize:11,fontFamily:"'Share Tech Mono',monospace",color:'#5a8ea8'}}>{r.ip_address??'-'}</td>
+                <td style={{fontSize:11,fontFamily:"'JetBrains Mono',monospace",color:'#5a8ea8'}}>{r.ip_address??'-'}</td>
                 <td style={{fontSize:11,color:'#a0cfe0'}}>{r.detail??'-'}</td>
               </tr>
             ))}
@@ -1366,7 +1367,7 @@ function QuotaBar({used,limit,color}:{used:number;limit:number;color:string}) {
   return (
     <div>
       <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#5a8ea8',marginBottom:4}}>
-        <span style={{color:dangerColor,fontFamily:"'Share Tech Mono',monospace",fontWeight:700}}>{used} terkirim</span>
+        <span style={{color:dangerColor,fontFamily:"'JetBrains Mono',monospace",fontWeight:700}}>{used} terkirim</span>
         <span>{limit - used} sisa dari {limit}</span>
       </div>
       <div style={{height:6,borderRadius:3,background:'rgba(0,212,255,.08)',overflow:'hidden'}}>
@@ -1569,7 +1570,7 @@ function TabEmailNotif({ isSA }: { isSA:boolean }) {
                   ].map(([l,v,c])=>(
                     <div key={l as string} style={{textAlign:'center',padding:'8px 6px',
                       background:'rgba(0,212,255,.03)',border:'1px solid rgba(0,212,255,.08)',borderRadius:6}}>
-                      <div style={{fontSize:20,fontWeight:400,color:c as string,fontFamily:"'Share Tech Mono',monospace"}}>{v as number}</div>
+                      <div style={{fontSize:20,fontWeight:400,color:c as string,fontFamily:"'JetBrains Mono',monospace"}}>{v as number}</div>
                       <div style={{fontSize:9,color:'#5a8ea8',letterSpacing:.5,marginTop:2}}>{l as string}</div>
                     </div>
                   ))}
@@ -1591,7 +1592,7 @@ function TabEmailNotif({ isSA }: { isSA:boolean }) {
             ].map(([k,v,c])=>(
               <div key={k as string} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid rgba(0,212,255,.05)',fontSize:11}}>
                 <span style={{color:'#5a8ea8'}}>{k as string}</span>
-                <span className={c as string} style={{fontFamily:"'Share Tech Mono',monospace",fontWeight:700,fontSize:10}}>{v as string}</span>
+                <span className={c as string} style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:700,fontSize:10}}>{v as string}</span>
               </div>
             ))}
           </div>

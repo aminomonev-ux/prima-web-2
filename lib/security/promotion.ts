@@ -1,7 +1,7 @@
-﻿// â•â•â• PRIMA â€” Promotion Security Helpers (Role Promotion Ladder) â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ═══ PRIMA — Promotion Security Helpers (Role Promotion Ladder) ═════════════
 // 5-layer security: L1 re-auth, L2 secret, L3 turnstile (di handler), L4 lock,
 // L5 dual-control (di lib/data/promotion.ts). Plus bootstrap detection + quota.
-// Konsep: docs/session/ROLE_PROMOTION_CONCEPT.md Â§3-Â§4
+// Konsep: docs/session/ROLE_PROMOTION_CONCEPT.md §3-§4
 
 import { timingSafeEqual } from 'crypto';
 import { sql, sqlInt, toMysqlDatetime } from '@/lib/data/db';
@@ -15,20 +15,20 @@ import {
   BIDANG_ROLES,
 } from '@/lib/constants';
 
-// â”€â”€â”€ L2 Secret env validation (fail-fast, mirror JWT_SECRET pattern) â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── L2 Secret env validation (fail-fast, mirror JWT_SECRET pattern) ────────
 
 const _rawPromotionSecret = process.env.PROMOTION_SECRET ?? '';
 if (!_rawPromotionSecret || _rawPromotionSecret.length < 8) {
   throw new Error(
     '[FATAL] PROMOTION_SECRET env var is required (min 8 chars). ' +
     'Set memorable 12-16 char value, contoh "Prima-XXXX-2026". ' +
-    'Lihat docs/session/ROLE_PROMOTION_CONCEPT.md Â§3.',
+    'Lihat docs/session/ROLE_PROMOTION_CONCEPT.md §3.',
   );
 }
 const PROMOTION_SECRET_BUFFER = Buffer.from(_rawPromotionSecret, 'utf8');
 
 // P-SEC-1: validate PROMOTION_OWNER_EMAILS at module load. Concept doc treats
-// as required â€” bootstrap alert + L5 review queue depend on it. Mirror L1
+// as required — bootstrap alert + L5 review queue depend on it. Mirror L1
 // JWT_SECRET fail-fast pattern.
 const _rawOwnerEmails = process.env.PROMOTION_OWNER_EMAILS ?? '';
 const _parsedOwnerEmails = _rawOwnerEmails
@@ -40,12 +40,12 @@ if (_dedupedOwnerEmails.length === 0) {
   throw new Error(
     '[FATAL] PROMOTION_OWNER_EMAILS env var is required (min 1 valid email, max 3 comma-separated). ' +
     'Contoh: "owner@example.com". Dipakai untuk alert bootstrap + emergency. ' +
-    'Lihat docs/session/ROLE_PROMOTION_CONCEPT.md Â§6.',
+    'Lihat docs/session/ROLE_PROMOTION_CONCEPT.md §6.',
   );
 }
 
 /**
- * L2 â€” Timing-safe compare secret code dari user input dengan env.
+ * L2 — Timing-safe compare secret code dari user input dengan env.
  * Beda panjang langsung false (timingSafeEqual throw kalau length mismatch).
  */
 export function verifyPromotionSecret(input: string): boolean {
@@ -58,10 +58,10 @@ export function verifyPromotionSecret(input: string): boolean {
   }
 }
 
-// â”€â”€â”€ L1 Password re-auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── L1 Password re-auth ─────────────────────────────────────────────────────
 
 /**
- * L1 â€” Verify password user untuk re-auth saat submit promotion.
+ * L1 — Verify password user untuk re-auth saat submit promotion.
  * Return false kalau user tidak ada atau password salah.
  */
 export async function verifyPromotionPassword(userId: number, plain: string): Promise<boolean> {
@@ -73,7 +73,7 @@ export async function verifyPromotionPassword(userId: number, plain: string): Pr
   return verifyPassword(plain, rows[0].password_hash);
 }
 
-// â”€â”€â”€ L4 Lock + attempt counter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── L4 Lock + attempt counter ──────────────────────────────────────────────
 
 export type PromotionLockStatus =
   | { locked: false }
@@ -103,7 +103,7 @@ export async function checkPromotionLock(userId: number): Promise<PromotionLockS
 }
 
 /**
- * Increment counter L1/L2 fail. Kalau hit max â†’ set lock 24h.
+ * Increment counter L1/L2 fail. Kalau hit max → set lock 24h.
  * Return status setelah increment.
  */
 export async function incrementPromotionFailCount(userId: number): Promise<{
@@ -137,7 +137,7 @@ export async function incrementPromotionFailCount(userId: number): Promise<{
   };
 }
 
-/** Reset counter saat success â€” dipanggil setelah submit valid. */
+/** Reset counter saat success — dipanggil setelah submit valid. */
 export async function clearPromotionFailCount(userId: number): Promise<void> {
   await sql`
     UPDATE users
@@ -158,7 +158,7 @@ export async function clearPromotionLock(userId: number): Promise<void> {
   `;
 }
 
-// â”€â”€â”€ Quota enforcement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Quota enforcement ──────────────────────────────────────────────────────
 
 /** Quota max akun per role (lihat lib/constants.ts). */
 export function getRoleQuota(role: string): number | null {
@@ -186,7 +186,7 @@ export async function assertQuotaAvailable(role: string): Promise<void> {
   }
 }
 
-/** Snapshot semua quota â€” untuk GET /api/admin/role-quota-stats. */
+/** Snapshot semua quota — untuk GET /api/admin/role-quota-stats. */
 export async function getRoleQuotaStats(): Promise<Array<{
   role: string;
   count: number;
@@ -194,7 +194,7 @@ export async function getRoleQuotaStats(): Promise<Array<{
   full: boolean;
 }>> {
   const tracked: string[] = ['SUPER_ADMIN', 'ADMIN', ...BIDANG_ROLES];
-  // Single GROUP BY query â€” semua role AKTIF di tracked list (filter di JS).
+  // Single GROUP BY query — semua role AKTIF di tracked list (filter di JS).
   const rows = await sql`
     SELECT role, COUNT(*) AS n
     FROM users
@@ -210,13 +210,13 @@ export async function getRoleQuotaStats(): Promise<Array<{
   });
 }
 
-// â”€â”€â”€ Bootstrap detection (chain ADMIN â†’ SUPER_ADMIN khusus) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Bootstrap detection (chain ADMIN → SUPER_ADMIN khusus) ─────────────────
 
 /**
  * Bootstrap aktif kalau:
  *   (a) tidak ada satu pun SUPER_ADMIN AKTIF di users, DAN
  *   (b) flag system_settings.bootstrap_super_admin_used_at masih NULL
- * Detail: docs/session/ROLE_PROMOTION_CONCEPT.md Â§4.
+ * Detail: docs/session/ROLE_PROMOTION_CONCEPT.md §4.
  */
 export async function isBootstrapMode(): Promise<boolean> {
   const saCount = await getActiveRoleCount('SUPER_ADMIN');
@@ -225,23 +225,23 @@ export async function isBootstrapMode(): Promise<boolean> {
     SELECT val FROM system_settings
     WHERE \`key\` = 'bootstrap_super_admin_used_at' LIMIT 1
   ` as Array<{ val: string | null }>;
-  if (rows.length === 0) return true; // row belum exist â†’ treat bootstrap available
+  if (rows.length === 0) return true; // row belum exist → treat bootstrap available
   return rows[0].val === null;
 }
 
 /**
- * Atomic claim bootstrap (L52 race protection). Set flag dari NULL â†’ NOW().
+ * Atomic claim bootstrap (L52 race protection). Set flag dari NULL → NOW().
  * Return false kalau race lost (val sudah di-set requester lain).
  * Caller WAJIB cek return value sebelum lanjut auto-approve.
  */
 export async function claimBootstrap(): Promise<boolean> {
   const now = toMysqlDatetime(new Date());
-  // Ensure row exists (idempotent â€” match migration 037 INSERT IGNORE).
+  // Ensure row exists (idempotent — match migration 037 INSERT IGNORE).
   await sql`
     INSERT IGNORE INTO system_settings (\`key\`, \`val\`)
     VALUES ('bootstrap_super_admin_used_at', NULL)
   `;
-  // Atomic claim â€” affectedRows=1 berarti race menang.
+  // Atomic claim — affectedRows=1 berarti race menang.
   // NB: sql wrapper (lib/data/db.ts:59) return UPDATE sebagai array [{insertId, affectedRows}],
   // BUKAN object. Akses lewat r[0].
   const r = await sql`
@@ -252,22 +252,22 @@ export async function claimBootstrap(): Promise<boolean> {
   return (r[0]?.affectedRows ?? 0) > 0;
 }
 
-/** @deprecated Pakai claimBootstrap() â€” atomic. */
+/** @deprecated Pakai claimBootstrap() — atomic. */
 export async function markBootstrapUsed(): Promise<void> {
   await claimBootstrap();
 }
 
-// â”€â”€â”€ Owner emails (PROMOTION_OWNER_EMAILS env) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Owner emails (PROMOTION_OWNER_EMAILS env) ──────────────────────────────
 
 /**
  * Return parsed owner emails (max 3, deduped). Module load throws kalau env
- * kosong â€” di sini safe untuk return langsung tanpa cek lagi.
+ * kosong — di sini safe untuk return langsung tanpa cek lagi.
  */
 export function getOwnerEmails(): string[] {
   return [..._dedupedOwnerEmails];
 }
 
-/** Email semua SA AKTIF â€” untuk notifikasi L5 review queue. */
+/** Email semua SA AKTIF — untuk notifikasi L5 review queue. */
 export async function getActiveSuperAdminEmails(): Promise<string[]> {
   const rows = await sql`
     SELECT email FROM users
@@ -276,7 +276,7 @@ export async function getActiveSuperAdminEmails(): Promise<string[]> {
   return rows.map((r) => r.email).filter(Boolean);
 }
 
-/** Username semua SA AKTIF â€” untuk in-app notif recipient. */
+/** Username semua SA AKTIF — untuk in-app notif recipient. */
 export async function getActiveSuperAdminUsernames(): Promise<string[]> {
   const rows = await sql`
     SELECT username FROM users

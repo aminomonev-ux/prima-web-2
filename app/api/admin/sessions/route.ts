@@ -1,16 +1,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { sql, safeInt, sqlInt, toMysqlDatetime } from '@/lib/data/db';
+import { sql, safeInt, sqlInt } from '@/lib/data/db';
 import { getSession, verifyPassword } from '@/lib/security/auth';
 import { writeAuditLog } from '@/lib/security/auditlog';
-import { SESSION_DURATION_HOURS } from '@/lib/constants';
 
 // PERF-W5: GET tanpa LIMIT bisa load ribuan row kalau user_sessions tumbuh.
-// Default 100/page (ceiling) + prune row invalidated > 30 hari supaya tabel
-// tidak grow tak terkendali. Frontend backward-compat: `data` tetap array.
+// Default 100/page (ceiling). Frontend backward-compat: `data` tetap array.
+// N-2: ghost-invalidate + prune dipindah ke cron purge-retention (GET kini
+// murni read-only — tidak lagi write-on-read tiap request).
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT     = 500;
-const PRUNE_DAYS    = 30;
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -23,29 +22,6 @@ export async function GET(req: NextRequest) {
   const reqLimit = safeInt(url.searchParams.get('limit'), DEFAULT_LIMIT);
   const limit    = Math.min(Math.max(reqLimit, 1), MAX_LIMIT);
   const offset   = Math.max(safeInt(url.searchParams.get('offset'), 0), 0);
-
-  // Auto-cleanup #1: ghost sessions — JWT expired in browser but DB record never cleaned up.
-  // Compute cutoff in JS (avoids INTERVAL param issue). Use try/catch — SqlFragment is PromiseLike, has no .catch()
-  const cutoff = toMysqlDatetime(new Date(Date.now() - SESSION_DURATION_HOURS * 60 * 60 * 1000));
-  try {
-    await sql`
-      UPDATE user_sessions
-      SET invalidated_at = NOW()
-      WHERE invalidated_at IS NULL
-        AND last_active < ${cutoff}
-    `;
-  } catch { /* silent — cleanup best-effort, jangan block response */ }
-
-  // Auto-cleanup #2 (PERF-W5): prune row invalidated > 30 hari supaya tabel
-  // tidak tumbuh tak terbatas. Best-effort, jangan blokir response kalau gagal.
-  const pruneCutoff = toMysqlDatetime(new Date(Date.now() - PRUNE_DAYS * 24 * 60 * 60 * 1000));
-  try {
-    await sql`
-      DELETE FROM user_sessions
-      WHERE invalidated_at IS NOT NULL
-        AND invalidated_at < ${pruneCutoff}
-    `;
-  } catch { /* silent — prune best-effort */ }
 
   // Count total active sessions (untuk pagination metadata)
   const countRows = await sql`

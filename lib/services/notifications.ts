@@ -1,4 +1,4 @@
-import { sql } from '@/lib/data/db';
+import { sql, bulkInsert, withTransaction } from '@/lib/data/db';
 import { SUBBIDANG_TO_BIDANG, BIDANG_ROLES } from '@/lib/constants';
 
 // Build daftar recipient yang user dengan (role, username) berhak baca/aksinya.
@@ -42,6 +42,27 @@ export async function addNotif(
   } catch (e) {
     console.error('[addNotif error]', e);
   }
+}
+
+/**
+ * Bulk in-app notif: satu pesan ke banyak recipient (mis. broadcast admin).
+ * V5-ADMIN-01: atomik via withTransaction + bulkInsert (ganti loop `await sql`
+ * yang N+1 & partial-commit). V5-ADMIN-02: sanitizeNotif sekali, sama dengan
+ * jalur addNotif — broadcast tidak lagi punya escaping sendiri yang divergen.
+ * Return jumlah baris notif yang dibuat.
+ */
+export async function addNotifBulk(
+  recipients: ReadonlyArray<{ recipient: string; role: string }>,
+  type: string,
+  pesan: string,
+): Promise<number> {
+  if (recipients.length === 0) return 0;
+  const safe = sanitizeNotif(pesan);
+  const rows = recipients.map(r => [r.recipient, r.role, type, safe]);
+  const res = await withTransaction(async ({ conn }) =>
+    bulkInsert('notifications', ['recipient', 'role', 'type', 'pesan'], rows, conn),
+  );
+  return res.affectedRows;
 }
 
 export function bidangRoleOf(subBidang: string): string {

@@ -1,6 +1,6 @@
 // GET /api/admin/email-log?limit=50
 // Return baris terakhir email_log untuk Admin Panel tab Email Notif.
-// Hanya SUPER_ADMIN / ADMIN yang boleh akses.
+// Hanya SUPER_ADMIN yang boleh akses (handler enforce SUPER_ADMIN-only).
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/security/auth';
