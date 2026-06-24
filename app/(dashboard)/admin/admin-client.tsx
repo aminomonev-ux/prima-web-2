@@ -1584,7 +1584,7 @@ function TabEmailNotif({ isSA }: { isSA:boolean }) {
             <div className="ap-card-title">INFO PROVIDER</div>
             {[
               ['Provider',     quota?.provider??'Gmail',   'cyan'],
-              ['From Email',   process.env.NEXT_PUBLIC_GMAIL_USER??'aminomonev@gmail.com', 'cyan'],
+              ['From Email',   process.env.NEXT_PUBLIC_GMAIL_USER??'admin@example.com', 'cyan'],
               ['Daily Limit',  `${quota?.dailyLimit??500} email`, 'green'],
               ['Monthly Limit',`${quota?.monthlyLimit??15000} email`,'green'],
               ['Status',       quota?'Terhubung':'Memuat...', quota?'green':'yellow'],
